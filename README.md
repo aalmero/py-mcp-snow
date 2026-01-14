@@ -25,7 +25,42 @@ A Model Context Protocol (MCP) server that provides AI assistants with standardi
 - ServiceNow instance with API access
 - ServiceNow credentials (username/password or API key)
 
-### Quick Setup (Recommended)
+**OR**
+
+- Docker and Docker Compose (for containerized deployment)
+
+### Docker Deployment (Recommended for Production)
+
+1. Clone the repository:
+```bash
+git clone <repository-url>
+cd servicenow-mcp-server
+```
+
+2. Configure environment variables:
+```bash
+cp .env.example .env
+# Edit .env with your ServiceNow credentials
+```
+
+3. Build and run with Docker Compose:
+```bash
+docker-compose up -d
+```
+
+The server will be available at `http://localhost:8000/mcp`
+
+4. View logs:
+```bash
+docker-compose logs -f
+```
+
+5. Stop the server:
+```bash
+docker-compose down
+```
+
+### Quick Setup (Recommended for Development)
 
 For a quick automated setup, run the development setup script:
 
