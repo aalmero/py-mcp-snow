@@ -1,0 +1,26 @@
+services:
+  servicenow-mcp:
+    build: .
+    container_name: servicenow-mcp-server
+    ports:
+      - "8000:8000"
+    environment:
+      # ServiceNow Configuration
+      - SERVICENOW_INSTANCE_URL=${SERVICENOW_INSTANCE_URL}
+      - SERVICENOW_USERNAME=${SERVICENOW_USERNAME}
+      - SERVICENOW_PASSWORD=${SERVICENOW_PASSWORD}
+      # Or use API key authentication
+      # - SERVICENOW_API_KEY=${SERVICENOW_API_KEY}
+      
+      # Optional Configuration
+      - SERVICENOW_TIMEOUT=${SERVICENOW_TIMEOUT:-30}
+      - SERVICENOW_RETRY_COUNT=${SERVICENOW_RETRY_COUNT:-3}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - MAX_CONCURRENT_REQUESTS=${MAX_CONCURRENT_REQUESTS:-10}
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/mcp"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
