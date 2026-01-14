@@ -7,14 +7,12 @@ A Model Context Protocol (MCP) server that provides AI assistants with standardi
 - 🔐 **Secure Authentication** - Support for basic auth and API key authentication
 - 📝 **Service Request Management** - Create, read, update, and search Service Requests
 - 🔍 **Advanced Search** - Filter requests by status, user, date range, and more
-- 🌊 **Streaming HTTP Support** - Memory-efficient processing of large datasets
 - ⚡ **FastMCP 2.0** - Simplified MCP server development with decorators
 - 🛡️ **Comprehensive Error Handling** - Detailed error messages and retry logic
 - ✅ **Fully Tested** - 52+ unit tests covering all core operations
 - 🔄 **Automatic Retry** - Configurable retry logic for transient failures
 - 📊 **Structured Logging** - Detailed logging for debugging and monitoring
-- 📤 **Data Export** - Stream large datasets in JSON, CSV, or NDJSON formats
-- 🔄 **Batch Processing** - Efficient batch operations on large result sets
+- 🌐 **Multiple Transports** - Support for stdio and streamable HTTP
 
 ## Installation
 
@@ -221,61 +219,6 @@ search_requests({
 })
 ```
 
-#### Streaming Operations
-
-For large datasets, the server provides memory-efficient streaming operations:
-
-#### Stream Search Results
-```python
-stream_search_requests({
-    "status": "1",
-    "date_from": "2024-01-01"
-}, format_type="json", chunk_size=100)
-```
-
-#### Stream Data Export
-```python
-# Export all requests in CSV format
-stream_export_requests(
-    filters=None,
-    format_type="csv",
-    fields=["sys_id", "number", "short_description", "state"]
-)
-
-# Export filtered requests in NDJSON format
-stream_export_requests(
-    filters={"state": "1"},
-    format_type="ndjson"
-)
-```
-
-#### Batch Processing
-```python
-# Batch update requests
-stream_batch_process_requests(
-    operation="update",
-    filters={"state": "1"},
-    batch_size=50,
-    update_data={"priority": "2"}
-)
-
-# Batch validation
-stream_batch_process_requests(
-    operation="validate",
-    filters={"date_from": "2024-01-01"},
-    batch_size=100
-)
-```
-
-### Streaming Formats
-
-The server supports multiple streaming formats:
-
-- **JSON** (`application/json`) - Standard JSON array format
-- **NDJSON** (`application/x-ndjson`) - Newline-delimited JSON for streaming
-- **CSV** (`text/csv`) - Comma-separated values with headers
-- **TEXT** (`text/plain`) - Plain text representation
-
 ## Why uv?
 
 This project uses [uv](https://docs.astral.sh/uv/) as the Python package manager for several benefits:
@@ -339,19 +282,6 @@ Update dependencies:
 uv sync --upgrade
 ```
 
-### Streaming Demo
-
-Run the streaming capabilities demonstration:
-```bash
-uv run python examples/streaming_demo.py
-```
-
-This demo shows:
-- Different streaming formats (JSON, NDJSON, CSV)
-- Memory efficiency benefits
-- Response size estimation
-- Practical use cases for streaming
-
 ## Project Structure
 
 ```
@@ -362,10 +292,8 @@ servicenow-mcp-server/
 │       │   └── servicenow_client.py
 │       ├── config/           # Configuration management
 │       │   └── settings.py
-│       ├── streaming/        # Streaming HTTP support
-│       │   ├── __init__.py
-│       │   ├── http_streaming.py
-│       │   └── mcp_streaming.py
+│       ├── tools/            # FastMCP tool definitions
+│       │   └── fastmcp_tools.py
 │       ├── utils/            # Utilities (logging, etc.)
 │       │   └── logging.py
 │       ├── exceptions.py     # Custom exceptions
@@ -373,10 +301,7 @@ servicenow-mcp-server/
 ├── tests/                    # Test suite
 │   ├── conftest.py          # Pytest fixtures
 │   ├── test_setup.py        # Setup tests
-│   ├── test_servicenow_client.py  # Client tests
-│   └── test_streaming.py    # Streaming tests
-├── examples/                  # Example scripts and demos
-│   └── streaming_demo.py    # Streaming capabilities demo
+│   └── test_servicenow_client.py  # Client tests
 ├── scripts/                  # Development scripts
 │   └── dev-setup.sh         # Automated development setup
 ├── .kiro/
@@ -385,6 +310,8 @@ servicenow-mcp-server/
 │           ├── requirements.md
 │           ├── design.md
 │           └── tasks.md
+├── Dockerfile               # Docker container definition
+├── docker-compose.yml       # Docker Compose configuration
 ├── pyproject.toml           # Project configuration
 ├── uv.lock                  # uv lock file
 ├── .python-version          # Python version specification
@@ -394,23 +321,13 @@ servicenow-mcp-server/
 
 ## Architecture
 
-The server follows a layered architecture with streaming support:
+The server follows a layered architecture:
 
 - **FastMCP Framework**: Handles MCP protocol communication and tool discovery
 - **Decorated Tools**: Python functions that expose ServiceNow operations
-- **Streaming Layer**: Memory-efficient processing for large datasets
 - **ServiceNow Client**: Manages HTTP communication with ServiceNow REST API
 - **Authentication Manager**: Handles credentials and authentication lifecycle
 - **Configuration Manager**: Manages server configuration and environment settings
-
-### Streaming Architecture
-
-The streaming layer provides:
-- **HTTP Streaming**: Chunked transfer encoding for large responses
-- **Format Support**: JSON, NDJSON, CSV, and text output formats
-- **Memory Efficiency**: Process large datasets without loading into memory
-- **Batch Processing**: Configurable batch sizes for optimal performance
-- **Progress Tracking**: Real-time progress updates for long-running operations
 
 ## Error Handling
 
@@ -436,7 +353,6 @@ The project includes comprehensive test coverage:
 - 52+ unit tests
 - 100% pass rate
 - Covers all core ServiceNow operations
-- Includes streaming functionality tests
 
 ## Implementation Status
 
@@ -450,14 +366,12 @@ The project includes comprehensive test coverage:
 - [x] Search and filtering
 - [x] Comprehensive error handling
 - [x] Unit tests for all operations
-- [x] Streaming HTTP support
-- [x] Memory-efficient data processing
-- [x] Multiple output formats (JSON, CSV, NDJSON)
-- [x] Batch processing capabilities
+- [x] FastMCP tool decorators
+- [x] MCP protocol integration
+- [x] Multiple transport support (stdio, streamable HTTP)
+- [x] Docker deployment
 
 ### In Progress 🚧
-- [ ] FastMCP tool decorators
-- [ ] MCP protocol integration
 - [ ] Property-based testing
 
 ### Planned 📋
@@ -465,6 +379,7 @@ The project includes comprehensive test coverage:
 - [ ] Additional ServiceNow table support
 - [ ] Webhook support
 - [ ] Performance optimizations
+- [ ] Pagination support for large result sets
 
 ## Contributing
 

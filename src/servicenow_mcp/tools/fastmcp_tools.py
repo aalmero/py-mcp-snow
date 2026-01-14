@@ -13,9 +13,8 @@ from ..utils.logging import get_logger
 # Global FastMCP instance
 mcp = FastMCP("ServiceNow MCP Server")
 
-# Global client instances (will be initialized by server)
+# Global client instance (will be initialized by server)
 servicenow_client: Optional[ServiceNowClient] = None
-streaming_tools: Optional[StreamingMCPTools] = None
 
 
 def initialize_tools(client: ServiceNowClient, streaming: StreamingMCPTools) -> None:
@@ -23,11 +22,10 @@ def initialize_tools(client: ServiceNowClient, streaming: StreamingMCPTools) -> 
     
     Args:
         client: Authenticated ServiceNow client
-        streaming: Streaming MCP tools instance
+        streaming: Streaming MCP tools instance (unused - kept for compatibility)
     """
-    global servicenow_client, streaming_tools
+    global servicenow_client
     servicenow_client = client
-    streaming_tools = streaming
     
     logger = get_logger()
     logger.info("FastMCP tools initialized with ServiceNow client")
@@ -290,134 +288,6 @@ def search_service_requests(
 
 
 @mcp.tool
-def stream_search_service_requests(
-    status: Optional[str] = None,
-    requested_for: Optional[str] = None,
-    opened_by: Optional[str] = None,
-    date_from: Optional[str] = None,
-    date_to: Optional[str] = None,
-    format_type: str = "json",
-    chunk_size: int = 100
-) -> Dict[str, Any]:
-    """Stream Service Request search results for large datasets.
-    
-    Args:
-        status: Service Request state to filter by
-        requested_for: User sys_id or username to filter by
-        opened_by: User sys_id or username who opened the request
-        date_from: Start date for opened_at filter (YYYY-MM-DD format)
-        date_to: End date for opened_at filter (YYYY-MM-DD format)
-        format_type: Output format ("json", "ndjson", "csv", "text")
-        chunk_size: Number of items to process per chunk
-    
-    Returns:
-        Dictionary with streaming response metadata
-    """
-    logger = get_logger()
-    logger.info("Starting streaming search of Service Requests")
-    
-    try:
-        if not streaming_tools:
-            raise ServiceNowMCPError("Streaming tools not initialized")
-        
-        # Build filters from provided parameters
-        filters = {}
-        if status is not None:
-            filters["status"] = status
-        if requested_for is not None:
-            filters["requested_for"] = requested_for
-        if opened_by is not None:
-            filters["opened_by"] = opened_by
-        if date_from is not None:
-            filters["date_from"] = date_from
-        if date_to is not None:
-            filters["date_to"] = date_to
-        
-        result = streaming_tools.stream_search_requests(
-            filters=filters,
-            format_type=format_type,
-            chunk_size=chunk_size
-        )
-        
-        logger.info(f"Streaming search configured: {format_type} format, chunk size {chunk_size}")
-        
-        return result
-        
-    except Exception as e:
-        logger.error(f"Failed to start streaming search: {e}")
-        if isinstance(e, ServiceNowMCPError):
-            return format_error_response(e)
-        return {
-            "success": False,
-            "error": str(e),
-            "error_code": "STREAM_SEARCH_ERROR"
-        }
-
-
-@mcp.tool
-def stream_export_service_requests(
-    status: Optional[str] = None,
-    requested_for: Optional[str] = None,
-    date_from: Optional[str] = None,
-    date_to: Optional[str] = None,
-    format_type: str = "csv",
-    fields: Optional[List[str]] = None
-) -> Dict[str, Any]:
-    """Stream Service Request export for large datasets.
-    
-    Args:
-        status: Service Request state to filter by (optional)
-        requested_for: User sys_id or username to filter by (optional)
-        date_from: Start date for opened_at filter (YYYY-MM-DD format)
-        date_to: End date for opened_at filter (YYYY-MM-DD format)
-        format_type: Export format ("json", "ndjson", "csv")
-        fields: Specific fields to include in export (optional)
-    
-    Returns:
-        Dictionary with export metadata and streaming information
-    """
-    logger = get_logger()
-    logger.info("Starting streaming export of Service Requests")
-    
-    try:
-        if not streaming_tools:
-            raise ServiceNowMCPError("Streaming tools not initialized")
-        
-        # Build filters from provided parameters
-        filters = None
-        if any([status, requested_for, date_from, date_to]):
-            filters = {}
-            if status is not None:
-                filters["status"] = status
-            if requested_for is not None:
-                filters["requested_for"] = requested_for
-            if date_from is not None:
-                filters["date_from"] = date_from
-            if date_to is not None:
-                filters["date_to"] = date_to
-        
-        result = streaming_tools.stream_export_requests(
-            filters=filters,
-            format_type=format_type,
-            fields=fields
-        )
-        
-        logger.info(f"Streaming export configured: {format_type} format")
-        
-        return result
-        
-    except Exception as e:
-        logger.error(f"Failed to start streaming export: {e}")
-        if isinstance(e, ServiceNowMCPError):
-            return format_error_response(e)
-        return {
-            "success": False,
-            "error": str(e),
-            "error_code": "STREAM_EXPORT_ERROR"
-        }
-
-
-@mcp.tool
 def get_server_info() -> Dict[str, Any]:
     """Get information about the ServiceNow MCP Server.
     
@@ -431,18 +301,13 @@ def get_server_info() -> Dict[str, Any]:
         server_info = {
             "name": "ServiceNow MCP Server",
             "version": "0.1.0",
-            "description": "MCP server for ServiceNow Service Request management with streaming support",
+            "description": "MCP server for ServiceNow Service Request management",
             "capabilities": {
                 "service_requests": {
                     "create": True,
                     "read": True,
                     "update": True,
-                    "search": True,
-                    "streaming": True
-                },
-                "streaming": {
-                    "formats": ["json", "ndjson", "csv", "text"],
-                    "operations": ["search", "export", "batch_process"]
+                    "search": True
                 },
                 "authentication": {
                     "basic_auth": True,
@@ -455,8 +320,6 @@ def get_server_info() -> Dict[str, Any]:
                 "get_service_request", 
                 "update_service_request",
                 "search_service_requests",
-                "stream_search_service_requests",
-                "stream_export_service_requests",
                 "get_server_info"
             ],
             "status": "ready" if servicenow_client and servicenow_client.is_authenticated() else "not_authenticated"

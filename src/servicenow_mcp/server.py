@@ -88,12 +88,7 @@ def run_fastmcp_server(transport: str = "stdio", host: str = "127.0.0.1", port: 
         logger.info("   • get_service_request - Retrieve Service Request by ID")
         logger.info("   • update_service_request - Update existing Service Requests")
         logger.info("   • search_service_requests - Search with multiple criteria")
-        logger.info("   • stream_search_service_requests - Memory-efficient streaming search")
-        logger.info("   • stream_export_service_requests - Large dataset export")
         logger.info("   • get_server_info - Server capabilities and status")
-        
-        logger.info("🌊 Streaming HTTP support enabled")
-        logger.info("📊 Supported formats: JSON, NDJSON, CSV, TEXT")
         
         logger.info("🎯 ServiceNow MCP Server ready for connections!")
         
