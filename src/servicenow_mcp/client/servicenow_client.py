@@ -842,6 +842,41 @@ class ServiceNowClient:
         """
         return self._authenticated
     
+    def order_catalog_item(self, sys_id: str, variables: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+        """Order a catalog item using the Service Catalog API.
+        
+        Args:
+            sys_id: Catalog item sys_id
+            variables: Variables for the catalog item order
+            
+        Returns:
+            Dict containing order information and request details
+            
+        Raises:
+            ValidationError: If sys_id is invalid
+            ResourceNotFoundError: If catalog item not found
+            ServiceNowAPIError: If order fails
+        """
+        if not sys_id:
+            raise ValidationError(
+                "Catalog item sys_id cannot be empty",
+                field_name="sys_id",
+                invalid_value=sys_id
+            )
+        
+        endpoint = f"/api/sn_sc/servicecatalog/items/{sys_id}/order_now"
+        data = {"variables": variables or {}}
+        
+        response_data = self._make_request("POST", endpoint, data=data)
+        
+        if 'result' in response_data:
+            return response_data['result']
+        else:
+            raise ServiceNowAPIError(
+                "Unexpected response format from ServiceNow",
+                response_data=response_data
+            )
+    
     def close(self) -> None:
         """Close the HTTP session."""
         if self.session:
