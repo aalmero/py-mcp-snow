@@ -8,29 +8,27 @@ from .config.settings import load_servicenow_config, load_server_config
 from .utils.logging import setup_logging, get_logger
 from .exceptions import ConfigurationError, ServiceNowMCPError
 from .client.servicenow_client import ServiceNowClient
-from .streaming import StreamingMCPTools
 from .tools import mcp, initialize_tools
 
 
 # Global instances for MCP tools
 servicenow_client: Optional[ServiceNowClient] = None
-streaming_tools: Optional[StreamingMCPTools] = None
 
 
-def initialize_server() -> tuple[ServiceNowClient, StreamingMCPTools]:
-    """Initialize ServiceNow client and streaming tools.
+def initialize_server() -> tuple[ServiceNowClient]:
+    """Initialize ServiceNow client.
     
     Returns:
-        Tuple of (ServiceNowClient, StreamingMCPTools)
+        Tuple of (ServiceNowClient)
         
     Raises:
         ConfigurationError: If configuration is invalid
         ServiceNowMCPError: If initialization fails
     """
-    global servicenow_client, streaming_tools
+    global servicenow_client
     
-    if servicenow_client is not None and streaming_tools is not None:
-        return servicenow_client, streaming_tools
+    if servicenow_client is not None:
+        return servicenow_client
     
     # Load configurations
     server_config = load_server_config()
@@ -44,16 +42,12 @@ def initialize_server() -> tuple[ServiceNowClient, StreamingMCPTools]:
     servicenow_client = ServiceNowClient(servicenow_config)
     logger.info("ServiceNow client initialized")
     
-    # Initialize streaming MCP tools
-    streaming_tools = StreamingMCPTools(servicenow_client)
-    logger.info("Streaming MCP tools initialized")
-    
     # Initialize FastMCP tools with clients
-    initialize_tools(servicenow_client, streaming_tools)
+    initialize_tools(servicenow_client)
     logger.info("FastMCP tools initialized")
     
     logger.info("ServiceNow MCP Server components ready")
-    return servicenow_client, streaming_tools
+    return servicenow_client
 
 
 def run_fastmcp_server(transport: str = "stdio", host: str = "127.0.0.1", port: int = 8000):

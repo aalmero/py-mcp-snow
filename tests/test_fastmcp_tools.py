@@ -47,9 +47,9 @@ class TestFastMCPToolsInitialization:
         assert mcp is not None
         assert mcp.name == "ServiceNow MCP Server"
     
-    def test_initialize_tools(self, mock_servicenow_client, mock_streaming_tools):
+    def test_initialize_tools(self, mock_servicenow_client):
         """Test tools initialization."""
-        initialize_tools(mock_servicenow_client, mock_streaming_tools)
+        initialize_tools(mock_servicenow_client)
         
         # Tools should be initialized (we can't easily test globals, but no errors should occur)
         assert True  # If we get here, initialization succeeded
@@ -65,8 +65,7 @@ class TestFastMCPToolsInitialization:
             "get_service_request",
             "update_service_request", 
             "search_service_requests",
-            "stream_search_service_requests",
-            "stream_export_service_requests",
+            "order_catalog_item",
             "get_server_info"
         ]
         
@@ -112,6 +111,17 @@ class TestServiceRequestToolsIntegration:
         assert "Update an existing Service Request" in update_tool.description
     
     @patch('src.servicenow_mcp.tools.fastmcp_tools.servicenow_client')
+    def test_order_catalog_item_tool_exists(self, mock_client):
+        """Test that order_catalog_item tool is properly registered."""
+        tools = mcp._tool_manager._tools
+        assert "order_catalog_item" in tools
+        
+        order_tool = tools["order_catalog_item"]
+        assert order_tool is not None
+        assert order_tool.description is not None
+        assert "Order a catalog item" in order_tool.description
+    
+    @patch('src.servicenow_mcp.tools.fastmcp_tools.servicenow_client')
     def test_search_service_requests_tool_exists(self, mock_client):
         """Test that search_service_requests tool is properly registered."""
         tools = mcp._tool_manager._tools
@@ -121,32 +131,6 @@ class TestServiceRequestToolsIntegration:
         assert search_tool is not None
         assert search_tool.description is not None
         assert "Search Service Requests" in search_tool.description
-
-
-class TestStreamingToolsIntegration:
-    """Test streaming MCP tools integration."""
-    
-    @patch('src.servicenow_mcp.tools.fastmcp_tools.streaming_tools')
-    def test_stream_search_tool_exists(self, mock_streaming):
-        """Test that stream_search_service_requests tool is properly registered."""
-        tools = mcp._tool_manager._tools
-        assert "stream_search_service_requests" in tools
-        
-        stream_search_tool = tools["stream_search_service_requests"]
-        assert stream_search_tool is not None
-        assert stream_search_tool.description is not None
-        assert "Stream Service Request search results" in stream_search_tool.description
-    
-    @patch('src.servicenow_mcp.tools.fastmcp_tools.streaming_tools')
-    def test_stream_export_tool_exists(self, mock_streaming):
-        """Test that stream_export_service_requests tool is properly registered."""
-        tools = mcp._tool_manager._tools
-        assert "stream_export_service_requests" in tools
-        
-        stream_export_tool = tools["stream_export_service_requests"]
-        assert stream_export_tool is not None
-        assert stream_export_tool.description is not None
-        assert "Stream Service Request export" in stream_export_tool.description
 
 
 class TestServerInfoTool:
@@ -200,20 +184,6 @@ class TestToolSchemas:
         assert "requested_for" in schema["properties"]
         assert "date_from" in schema["properties"]
         assert "limit" in schema["properties"]
-    
-    def test_stream_search_service_requests_schema(self):
-        """Test stream_search_service_requests tool schema."""
-        tools = mcp._tool_manager._tools
-        assert "stream_search_service_requests" in tools
-        
-        stream_tool = tools["stream_search_service_requests"]
-        assert stream_tool is not None
-        
-        # Check that streaming parameters are in schema
-        schema = stream_tool.parameters
-        assert "properties" in schema
-        assert "format_type" in schema["properties"]
-        assert "chunk_size" in schema["properties"]
 
 
 class TestFastMCPIntegration:
@@ -223,7 +193,7 @@ class TestFastMCPIntegration:
         """Test FastMCP server configuration."""
         assert mcp.name == "ServiceNow MCP Server"
         tools = mcp._tool_manager._tools
-        assert len(tools) >= 7  # Should have at least 7 tools
+        assert len(tools) >= 6  # Should have at least 6 tools
     
     def test_all_tools_have_descriptions(self):
         """Test that all tools have proper descriptions."""

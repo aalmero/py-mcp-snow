@@ -6,6 +6,7 @@ A Model Context Protocol (MCP) server that provides AI assistants with standardi
 
 - 🔐 **Secure Authentication** - Support for basic auth and API key authentication
 - 📝 **Service Request Management** - Create, read, update, and search Service Requests
+- 🛒 **Service Catalog Integration** - Order catalog items using the Service Catalog API
 - 🔍 **Advanced Search** - Filter requests by status, user, date range, and more
 - ⚡ **FastMCP 2.0** - Simplified MCP server development with decorators
 - 🛡️ **Comprehensive Error Handling** - Detailed error messages and retry logic
@@ -206,6 +207,15 @@ update_request("abc123", {
     "state": "2",
     "priority": "1",
     "work_notes": "Updated priority to high"
+})
+```
+
+#### Order Catalog Item
+```python
+order_catalog_item("catalog_item_sys_id", {
+    "quantity": "1",
+    "requested_for": "user_sys_id",
+    "custom_variable": "value"
 })
 ```
 

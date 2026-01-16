@@ -5,7 +5,6 @@ import json
 
 from fastmcp import FastMCP
 from ..client.servicenow_client import ServiceNowClient
-from ..streaming import StreamingMCPTools
 from ..exceptions import ServiceNowMCPError, ValidationError, format_error_response
 from ..utils.logging import get_logger
 
@@ -16,13 +15,11 @@ mcp = FastMCP("ServiceNow MCP Server")
 # Global client instance (will be initialized by server)
 servicenow_client: Optional[ServiceNowClient] = None
 
-
-def initialize_tools(client: ServiceNowClient, streaming: StreamingMCPTools) -> None:
+def initialize_tools(client: ServiceNowClient) -> None:
     """Initialize the global client instances for tools.
     
     Args:
         client: Authenticated ServiceNow client
-        streaming: Streaming MCP tools instance (unused - kept for compatibility)
     """
     global servicenow_client
     servicenow_client = client
@@ -288,6 +285,52 @@ def search_service_requests(
 
 
 @mcp.tool
+def order_catalog_item(
+    sys_id: str,
+    variables: Optional[Dict[str, Any]] = None
+) -> Dict[str, Any]:
+    """Order a catalog item using the Service Catalog API.
+    
+    Args:
+        sys_id: The sys_id of the catalog item to order
+        variables: Dictionary of variables for the catalog item (optional)
+    
+    Returns:
+        Dictionary containing order information and request details
+    """
+    logger = get_logger()
+    logger.info(f"Ordering catalog item: {sys_id}")
+    
+    try:
+        if not servicenow_client:
+            raise ServiceNowMCPError("ServiceNow client not initialized")
+        
+        # Authenticate if not already done
+        if not servicenow_client.is_authenticated():
+            servicenow_client.authenticate()
+        
+        result = servicenow_client.order_catalog_item(sys_id, variables)
+        
+        logger.info(f"Catalog item ordered successfully: {sys_id}")
+        
+        return {
+            "success": True,
+            "data": result,
+            "message": f"Catalog item {sys_id} ordered successfully"
+        }
+        
+    except Exception as e:
+        logger.error(f"Failed to order catalog item: {e}")
+        if isinstance(e, ServiceNowMCPError):
+            return format_error_response(e)
+        return {
+            "success": False,
+            "error": str(e),
+            "error_code": "ORDER_CATALOG_ITEM_ERROR"
+        }
+
+
+@mcp.tool
 def get_server_info() -> Dict[str, Any]:
     """Get information about the ServiceNow MCP Server.
     
@@ -320,6 +363,7 @@ def get_server_info() -> Dict[str, Any]:
                 "get_service_request", 
                 "update_service_request",
                 "search_service_requests",
+                "order_catalog_item",
                 "get_server_info"
             ],
             "status": "ready" if servicenow_client and servicenow_client.is_authenticated() else "not_authenticated"
