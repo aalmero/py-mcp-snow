@@ -60,7 +60,7 @@ def run_fastmcp_server(transport: str = "stdio", host: str = "127.0.0.1", port: 
     """
     try:
         # Initialize components
-        client, tools = initialize_server()
+        client = initialize_server()
         
         logger = get_logger()
         logger.info(f"🚀 Starting ServiceNow MCP Server with {transport} transport...")

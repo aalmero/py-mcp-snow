@@ -25,19 +25,17 @@ def mock_servicenow_client():
     client._authenticated = True
     return client
 
+# @pytest.fixture
+# def mock_streaming_tools(mock_servicenow_client):
+#     """Mock streaming tools for testing."""
+#     return StreamingMCPTools(mock_servicenow_client)
+
 
 @pytest.fixture
-def mock_streaming_tools(mock_servicenow_client):
-    """Mock streaming tools for testing."""
-    return StreamingMCPTools(mock_servicenow_client)
-
-
-@pytest.fixture
-def initialized_tools(mock_servicenow_client, mock_streaming_tools):
+def initialized_tools(mock_servicenow_clients):
     """Initialize tools with mock clients."""
-    initialize_tools(mock_servicenow_client, mock_streaming_tools)
-    return mock_servicenow_client, mock_streaming_tools
-
+    initialize_tools(mock_servicenow_client)
+    return mock_servicenow_client
 
 class TestFastMCPToolsInitialization:
     """Test FastMCP tools initialization."""
@@ -115,7 +113,6 @@ class TestServiceRequestToolsIntegration:
         """Test that order_catalog_item tool is properly registered."""
         tools = mcp._tool_manager._tools
         assert "order_catalog_item" in tools
-        
         order_tool = tools["order_catalog_item"]
         assert order_tool is not None
         assert order_tool.description is not None

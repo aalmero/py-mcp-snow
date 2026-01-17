@@ -842,12 +842,11 @@ class ServiceNowClient:
         """
         return self._authenticated
     
-    def order_catalog_item(self, sys_id: str, variables: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    def order_catalog_item(self, data: Dict[str, Any]) -> Dict[str, Any]:
         """Order a catalog item using the Service Catalog API.
         
         Args:
-            sys_id: Catalog item sys_id
-            variables: Variables for the catalog item order
+            data: Data for the catalog item order
             
         Returns:
             Dict containing order information and request details
@@ -857,6 +856,10 @@ class ServiceNowClient:
             ResourceNotFoundError: If catalog item not found
             ServiceNowAPIError: If order fails
         """
+        sys_id = data.get('sys_id')
+        sysparm_quantity = data.get('sysparm_quantity', 1)
+
+        # Validate required fields
         if not sys_id:
             raise ValidationError(
                 "Catalog item sys_id cannot be empty",
@@ -864,8 +867,14 @@ class ServiceNowClient:
                 invalid_value=sys_id
             )
         
+        if not sysparm_quantity:
+            raise ValidationError(
+                "Catalog item sysparm_quantity is required for Catalog Item Order",
+                field_name="sysparm_quantity",
+                invalid_value=sysparm_quantity
+            )
+
         endpoint = f"/api/sn_sc/servicecatalog/items/{sys_id}/order_now"
-        data = {"variables": variables or {}}
         
         response_data = self._make_request("POST", endpoint, data=data)
         
