@@ -287,12 +287,18 @@ def search_service_requests(
 @mcp.tool
 def order_catalog_item(
     sys_id: str,
+    sysparm_also_request_for: Optional[str] = None,
+    sysparm_quantity: int = 1,
+    sysparm_requested_for: Optional[str] = None,
     variables: Optional[Dict[str, Any]] = None
 ) -> Dict[str, Any]:
     """Order a catalog item using the Service Catalog API.
     
     Args:
         sys_id: The sys_id of the catalog item to order
+        sysparm_also_request_for: Comma separated sys_id of the user to also request for (optional)
+        sysparm_quantity: Quantity of the catalog item to order (default: 1), cannot be negative
+        sysparm_requested_for: The sys_id of the user who requested the item
         variables: Dictionary of variables for the catalog item (optional)
     
     Returns:
@@ -309,7 +315,16 @@ def order_catalog_item(
         if not servicenow_client.is_authenticated():
             servicenow_client.authenticate()
         
-        result = servicenow_client.order_catalog_item(sys_id, variables)
+        # Build data for the order
+        catalog_data = {
+            "sys_id": sys_id,
+            "sysparm_also_request_for": sysparm_also_request_for,
+            "sysparm_quantity": sysparm_quantity,
+            "sysparm_requested_for": sysparm_requested_for,
+            "variables": variables or {}
+        }
+
+        result = servicenow_client.order_catalog_item(catalog_data)
         
         logger.info(f"Catalog item ordered successfully: {sys_id}")
         
