@@ -5,6 +5,7 @@ from typing import Dict, Any, Optional, List, Iterator, Union
 import requests
 from requests.auth import HTTPBasicAuth
 from requests.adapters import HTTPAdapter
+from servicenow_mcp.utils.logging import get_logger
 from urllib3.util.retry import Retry
 import json
 
@@ -18,6 +19,7 @@ from ..exceptions import (
     ValidationError
 )
 
+logger = get_logger()
 
 class ServiceNowClient:
     """HTTP client for ServiceNow REST API with authentication and error handling."""
@@ -32,6 +34,9 @@ class ServiceNowClient:
         self.session = requests.Session()
         self._setup_session()
         self._authenticated = False
+
+        #logger = get_logger()
+        logger.info("ServiceNowClient initialized with instance URL: %s", self.config.instance_url)
     
     def _setup_session(self) -> None:
         """Configure the requests session with retry strategy and timeouts."""
@@ -238,6 +243,8 @@ class ServiceNowClient:
         
         url = f"{self.config.instance_url}{endpoint}"
         
+        logger.info(f"Making {method} request to {url} with params: {params} and data: {data}")
+
         try:
             response = self.session.request(
                 method=method,
@@ -886,6 +893,103 @@ class ServiceNowClient:
                 response_data=response_data
             )
     
+    def get_catalog_items(self, params: Dict[str, Any]) -> Dict[str, Any]:
+        """Retrieve catalog items using the Service Catalog API.
+
+        Args:
+            params: Query parameters for catalog items retrieval
+
+        Returns:
+            Dict containing catalog items and metadata
+
+        Raises:
+            ServiceNowAPIError: If retrieval fails
+        """
+        endpoint = "/api/sn_sc/servicecatalog/items"
+
+        # Build query parameters
+        query_params = {}
+        for key, value in params.items():
+            if value is not None:
+                query_params[key] = value
+
+        logger.info(f"Retrieving catalog items with params: {query_params}")
+        response_data = self._make_request("GET", endpoint, params=query_params)
+
+        if 'result' in response_data:
+            return response_data['result']
+        else:
+            raise ServiceNowAPIError(
+                "Unexpected response format from ServiceNow",
+                response_data=response_data
+            )
+
+    def get_user(self, identifier: str, id_type: str = "sys_id") -> Dict[str, Any]:
+        """Retrieve a User by sys_id, user_name or email.
+
+        Args:
+            identifier: sys_id, user_name or email
+            id_type: "sys_id", "user_name" or "email"
+
+        Returns:
+            Dict containing User data
+
+        Raises:
+            ValidationError: If identifier is invalid
+            ResourceNotFoundError: If user not found
+            ServiceNowAPIError: If retrieval fails
+        """
+        if not identifier:
+            raise ValidationError(
+                f"User {id_type} cannot be empty",
+                field_name=id_type,
+                invalid_value=identifier
+            )
+
+        if id_type == "sys_id":
+            endpoint = f"/api/now/table/sys_user/{identifier}"
+            response_data = self._make_request("GET", endpoint)
+        elif id_type == "user_name":
+            endpoint = "/api/now/table/sys_user"
+            params = {'sysparm_query': f'user_name={identifier}'}
+            response_data = self._make_request("GET", endpoint, params=params)
+
+            if 'result' in response_data and response_data['result']:
+                return response_data['result'][0]
+            else:
+                raise ResourceNotFoundError(
+                    f"User with user_name {identifier} not found",
+                    resource_type="sys_user",
+                    resource_id=identifier
+                )
+        elif id_type == "email":
+            endpoint = "/api/now/table/sys_user"
+            params = {'sysparm_query': f'email={identifier}'}
+            response_data = self._make_request("GET", endpoint, params=params)
+
+            if 'result' in response_data and response_data['result']:
+                return response_data['result'][0]
+            else:
+                raise ResourceNotFoundError(
+                    f"User with email {identifier} not found",
+                    resource_type="sys_user",
+                    resource_id=identifier
+                )
+        else:
+            raise ValidationError(
+                f"Invalid id_type: {id_type}. Must be 'sys_id', 'user_name' or 'email'",
+                field_name="id_type",
+                invalid_value=id_type
+            )
+
+        if 'result' in response_data:
+            return response_data['result']
+        else:
+            raise ServiceNowAPIError(
+                "Unexpected response format from ServiceNow",
+                response_data=response_data
+        )
+
     def close(self) -> None:
         """Close the HTTP session."""
         if self.session:

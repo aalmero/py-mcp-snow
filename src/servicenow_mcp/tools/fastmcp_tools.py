@@ -242,37 +242,29 @@ def search_service_requests(
             servicenow_client.authenticate()
         
         # Build filters from provided parameters
-        filters = {}
-        if status is not None:
-            filters["status"] = status
-        if requested_for is not None:
-            filters["requested_for"] = requested_for
-        if opened_by is not None:
-            filters["opened_by"] = opened_by
-        if date_from is not None:
-            filters["date_from"] = date_from
-        if date_to is not None:
-            filters["date_to"] = date_to
-        if assignment_group is not None:
-            filters["assignment_group"] = assignment_group
-        if assigned_to is not None:
-            filters["assigned_to"] = assigned_to
-        if limit is not None:
-            filters["limit"] = limit
-        if offset is not None:
-            filters["offset"] = offset
-        
+        filters = {
+            "status": status,
+            "requested_for": requested_for,
+            "opened_by": opened_by,
+            "date_from": date_from,
+            "date_to": date_to,
+            "assignment_group": assignment_group,
+            "assigned_to": assigned_to,
+            "limit": limit,
+            "offset": offset
+        }
+
         results = servicenow_client.search_requests(filters)
-        
+
         logger.info(f"Search returned {len(results)} Service Requests")
-        
+
         return {
             "success": True,
             "data": results,
             "count": len(results),
             "message": f"Found {len(results)} Service Requests matching criteria"
         }
-        
+
     except Exception as e:
         logger.error(f"Failed to search Service Requests: {e}")
         if isinstance(e, ServiceNowMCPError):
@@ -346,6 +338,120 @@ def order_catalog_item(
 
 
 @mcp.tool
+def get_catalog_items(
+    sysparm_catalog: Optional[str] = None,
+    sysparm_category: Optional[str] = None,
+    sysparm_limit: int = 10, # Maximum number of items to return
+    sysparm_offset: int = 0, # Number of items to skip for pagination
+    sysparm_text: Optional[str] = None,
+    sysparm_type: Optional[str] = None,
+    sysparm_view: Optional[str] = None
+) -> Dict[str, Any]:
+    """Retrieve catalog items from ServiceNow Service Catalog.
+
+    Args:
+        sysparm_catalog: Catalog sys_id to filter items
+        sysparm_category: Category sys_id to filter items
+        sysparm_limit: Maximum number of items to return
+        sysparm_offset: Number of items to skip for pagination
+        sysparm_text: Text search filter
+        sysparm_type: Type of catalog items to return
+        sysparm_view: View to use for the response
+
+    Returns:
+        Dictionary containing catalog items and metadata
+    """
+    logger = get_logger()
+    logger.info("Retrieving catalog items")
+
+    try:
+        if not servicenow_client:
+            raise ServiceNowMCPError("ServiceNow client not initialized")
+
+        # Authenticate if not already done
+        if not servicenow_client.is_authenticated():
+            servicenow_client.authenticate()
+
+        # Build parameters
+        params = {
+            "sysparm_catalog": sysparm_catalog,
+            "sysparm_category": sysparm_category,
+            "sysparm_limit": sysparm_limit,
+            "sysparm_offset": sysparm_offset,
+            "sysparm_text": sysparm_text,
+            "sysparm_type": sysparm_type,
+            "sysparm_view": sysparm_view
+        }
+
+        logger.info(f"Catalog item query parameters: {params}")
+
+        result = servicenow_client.get_catalog_items(params)
+
+        logger.info("Catalog items retrieved successfully")
+
+        return {
+            "success": True,
+            "data": result,
+            "message": "Catalog items retrieved successfully"
+        }
+
+    except Exception as e:
+        logger.error(f"Failed to retrieve catalog items: {e}")
+        if isinstance(e, ServiceNowMCPError):
+            return format_error_response(e)
+        return {
+            "success": False,
+            "error": str(e),
+            "error_code": "GET_CATALOG_ITEMS_ERROR"
+        }
+
+@mcp.tool
+def get_user(
+    identifier: str,
+    id_type: str = "sys_id"
+) -> Dict[str, Any]:
+    """Retrieve a User by sys_id, user_name or email.
+
+    Args:
+        identifier: The sys_id, user_name or email to retrieve
+        id_type: Type of identifier ("sys_id", "user_name", or "email")
+
+    Returns:
+        Dictionary containing the User data
+    """
+    logger = get_logger()
+    logger.info(f"Retrieving User: {identifier} (type: {id_type})")
+
+    try:
+        if not servicenow_client:
+            raise ServiceNowMCPError("ServiceNow client not initialized")
+
+        # Authenticate if not already done
+        if not servicenow_client.is_authenticated():
+            servicenow_client.authenticate()
+
+        result = servicenow_client.get_user(identifier, id_type)
+
+        logger.info(f"User retrieved: {result.get('name', 'Unknown')}")
+        logger.info("User retrieved successfully")
+
+        return {
+            "success": True,
+            "data": result,
+            "message": f"User {result.get('name', identifier)} retrieved successfully"
+        }
+
+    except Exception as e:
+        logger.error(f"Failed to retrieve User: {e}")
+        if isinstance(e, ServiceNowMCPError):
+            return format_error_response(e)
+        return {
+            "success": False,
+            "error": str(e),
+            "error_code": "GET_USER_ERROR"
+        }
+
+@mcp.tool
 def get_server_info() -> Dict[str, Any]:
     """Get information about the ServiceNow MCP Server.
     
@@ -379,7 +485,8 @@ def get_server_info() -> Dict[str, Any]:
                 "update_service_request",
                 "search_service_requests",
                 "order_catalog_item",
-                "get_server_info"
+                "get_server_info",
+                "get_user"
             ],
             "status": "ready" if servicenow_client and servicenow_client.is_authenticated() else "not_authenticated"
         }
