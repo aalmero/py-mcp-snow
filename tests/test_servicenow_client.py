@@ -482,3 +482,134 @@ class TestServiceNowClientErrorHandling:
         
         with pytest.raises(ConnectionError, match="Request timeout"):
             self.client.create_request({"short_description": "test"})
+
+class TestServiceNowClientCatalogItems:
+    """Test ServiceNow client catalog items functionality."""
+
+    def setup_method(self):
+        """Set up authenticated client for each test."""
+        self.config = ServiceNowConfig(
+            instance_url="https://test-instance.service-now.com",
+            auth_type="basic",
+            username="test_user",
+            password="test_password"
+        )
+        self.client = ServiceNowClient(self.config)
+        self.client._authenticated = True
+
+    @patch('requests.Session.request')
+    def test_get_catalog_items_success(self, mock_request):
+        """Test successful catalog items retrieval."""
+        mock_response = Mock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = {
+            "result": [
+                {
+                    "sys_id": "item1",
+                    "name": "Test Item 1",
+                    "short_description": "Test catalog item 1"
+                },
+                {
+                    "sys_id": "item2",
+                    "name": "Test Item 2",
+                    "short_description": "Test catalog item 2"
+                }
+            ]
+        }
+        mock_request.return_value = mock_response
+
+        params = {
+            "sysparm_catalog": "catalog123",
+            "sysparm_limit": 10,
+            "sysparm_text": "test"
+        }
+
+        result = self.client.get_catalog_items(params)
+
+        assert len(result) == 2
+        assert result[0]["sys_id"] == "item1"
+        assert result[1]["name"] == "Test Item 2"
+
+        # Verify the request was made
+        mock_request.assert_called_once()
+
+class TestServiceNowClientGetUser:
+    """Test ServiceNow client get_user functionality."""
+
+    def setup_method(self):
+        """Set up authenticated client for each test."""
+        self.config = ServiceNowConfig(
+            instance_url="https://test-instance.service-now.com",
+            auth_type="basic",
+            username="test_user",
+            password="test_password"
+        )
+        self.client = ServiceNowClient(self.config)
+        self.client._authenticated = True
+
+    @patch('requests.Session.request')
+    def test_get_user_by_sys_id_success(self, mock_request):
+        """Test successful user retrieval by sys_id."""
+        mock_response = Mock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = {
+            "result": {
+                "sys_id": "user-sys-id",
+                "user_name": "testuser",
+                "email": "testuser@example.com"
+            }
+        }
+        mock_request.return_value = mock_response
+        result = self.client.get_user("user-sys-id", "sys_id")
+        assert result["sys_id"] == "user-sys-id"
+        assert result["user_name"] == "testuser"
+
+    @patch('requests.Session.request')
+    def test_get_user_by_username_success(self, mock_request):
+        """Test successful user retrieval by user name."""
+        mock_response = Mock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = {
+            "result": [{
+                "sys_id": "user-sys-id",
+                "user_name": "testuser",
+                "email": "testuser@example.com"
+            }]
+        }
+        mock_request.return_value = mock_response
+        result = self.client.get_user("testuser", "user_name")
+        assert result["sys_id"] == "user-sys-id"
+        assert result["user_name"] == "testuser"
+
+    @patch('requests.Session.request')
+    def test_get_user_by_email_success(self, mock_request):
+        """Test successful user retrieval by email."""
+        mock_response = Mock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = {
+            "result": [{
+                "sys_id": "user-sys-id",
+                "user_name": "testuser",
+                "email": "testuser@example.com"
+            }]
+        }
+        mock_request.return_value = mock_response
+        result = self.client.get_user("testuser@example.com", "email")
+        assert result["email"] == "testuser@example.com"
+
+    @patch('requests.Session.request')
+    def test_get_user_not_found(self, mock_request):
+        """Test user retrieval when user not found."""
+        mock_response = Mock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = {"result": []}
+        mock_request.return_value = mock_response
+
+        with pytest.raises(ResourceNotFoundError, match="not found"):
+            self.client.get_user("NONEXISTENT", "user_name")
+
+    @patch('requests.Session.request')
+    def test_get_user_invalid_identifier(self, mock_request):
+        """Test user retrieval with invalid identifier."""
+        with pytest.raises(ValidationError, match="cannot be empty"):
+            self.client.get_user("", "sys_id")
