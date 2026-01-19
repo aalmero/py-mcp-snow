@@ -294,7 +294,7 @@ def order_catalog_item(
         variables: Dictionary of variables for the catalog item (optional)
     
     Returns:
-        Dictionary containing order information and request details
+        Dictionary containing order information and request item details
     """
     logger = get_logger()
     logger.info(f"Ordering catalog item: {sys_id}")
@@ -319,10 +319,15 @@ def order_catalog_item(
         result = servicenow_client.order_catalog_item(catalog_data)
         
         logger.info(f"Catalog item ordered successfully: {sys_id}")
-        
+
+        # return the request items details instead of just the order info
+        request_id = result["request_id"]
+        logger.info(f"Retrieving request item details for request: {request_id}")
+        result_items = servicenow_client.get_request_items(filters={"request": request_id})
+
         return {
             "success": True,
-            "data": result,
+            "data": result_items,
             "message": f"Catalog item {sys_id} ordered successfully"
         }
         
@@ -449,6 +454,63 @@ def get_user(
             "success": False,
             "error": str(e),
             "error_code": "GET_USER_ERROR"
+        }
+
+@mcp.tool
+def get_service_request_items(
+    request: Optional[str] = None,
+    status: Optional[str] = None,
+    requested_for: Optional[str] = None,
+    opened_by: Optional[str] = None,
+) -> Dict[str, Any]:
+    """Retrieve Service Request Items with optional filters.
+
+    Args:
+        request: Filter by parent service request
+        status: Filter by status
+        requested_for: Filter by requested for user
+        opened_by: Filter by opened by user
+
+    Returns:
+        Dictionary containing service request items and metadata
+    """
+    logger = get_logger()
+    logger.info("Retrieving service request items")
+
+    try:
+        if not servicenow_client:
+            raise ServiceNowMCPError("ServiceNow client not initialized")
+
+        # Authenticate if not already done
+        if not servicenow_client.is_authenticated():
+            servicenow_client.authenticate()
+
+        # Build filters dictionary
+        filters = {
+            "request": request,
+            "status": status,
+            "requested_for": requested_for,
+            "opened_by": opened_by
+        }
+
+        result = servicenow_client.get_service_request_items(filters)
+
+        logger.info("Service request items retrieved successfully")
+
+        return {
+            "success": True,
+            "data": result,
+            "message": "Service request items retrieved successfully"
+        }
+
+    except Exception as e:
+        logger.error(f"Failed to retrieve service request items: {e}")
+        if isinstance(e, ServiceNowMCPError):
+            return format_error_response(e)
+        return {
+            "success": False,
+            "error": str(e),
+            "error_code": "GET_SERVICE_REQUEST_ITEMS_ERROR"
         }
 
 @mcp.tool

@@ -64,7 +64,8 @@ class TestFastMCPToolsInitialization:
             "search_service_requests",
             "order_catalog_item",
             "get_server_info",
-            "get_user"
+            "get_user",
+            "get_service_request_items"
         ]
 
         for tool_name in expected_tools:
