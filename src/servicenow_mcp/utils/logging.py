@@ -29,7 +29,8 @@ def setup_logging(config: Optional[ServerConfig] = None) -> logging.Logger:
         logger.removeHandler(handler)
     
     # Create console handler
-    console_handler = logging.StreamHandler(sys.stdout)
+    #console_handler = logging.StreamHandler(sys.stdout) # causes [error] Unexpected non-whitespace character after JSON ...
+    console_handler = logging.StreamHandler(sys.stderr) #fix
     console_handler.setLevel(getattr(logging, config.log_level))
     
     # Create formatter
