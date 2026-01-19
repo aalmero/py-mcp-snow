@@ -259,7 +259,15 @@ class ServiceNowClient:
                 if stream:
                     return self._stream_json_response(response)
                 else:
-                    return response.json()
+                    try:
+                        return response.json()
+                    except ValueError as e:
+                        logger.error(f"JSON parsing error. Response text: {response.text[:500]}")
+                        raise ServiceNowAPIError(
+                            f"Invalid JSON response from ServiceNow: {e}",
+                            status_code=response.status_code,
+                            response_data={"raw_response": response.text[:500]}
+                        )
             else:
                 self._handle_error_response(response)
                 
