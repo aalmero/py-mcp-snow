@@ -613,3 +613,167 @@ class TestServiceNowClientGetUser:
         """Test user retrieval with invalid identifier."""
         with pytest.raises(ValidationError, match="cannot be empty"):
             self.client.get_user("", "sys_id")
+
+class TestServiceNowClientRequestItems:
+    """Test ServiceNow client request items functionality."""
+
+    def setup_method(self):
+        """Set up authenticated client for each test."""
+        self.config = ServiceNowConfig(
+            instance_url="https://test-instance.service-now.com",
+            auth_type="basic",
+            username="test_user",
+            password="test_password"
+        )
+        self.client = ServiceNowClient(self.config)
+        self.client._authenticated = True
+
+    @patch('requests.Session.request')
+    def test_get_request_item_by_sys_id_success(self, mock_request):
+        """Test successful Service Request Item retrieval by sys_id."""
+        mock_response = Mock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = {
+            "result": {
+                "sys_id": "item-sys-id",
+                "number": "RITM0001234",
+                "short_description": "Test request item"
+            }
+        }
+        mock_request.return_value = mock_response
+
+        result = self.client.get_request_item("item-sys-id", "sys_id")
+
+        assert result["sys_id"] == "item-sys-id"
+        assert result["number"] == "RITM0001234"
+
+    @patch('requests.Session.request')
+    def test_get_request_item_by_number_success(self, mock_request):
+        """Test successful Service Request Item retrieval by number."""
+        mock_response = Mock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = {
+            "result": {
+                "sys_id": "item-sys-id",
+                "number": "RITM0001234",
+                "short_description": "Test request item"
+            }
+        }
+        mock_request.return_value = mock_response
+
+        result = self.client.get_request_item("RITM0001234", "number")
+
+        assert result["number"] == "RITM0001234"
+        assert result["short_description"] == "Test request item"
+
+    @patch('requests.Session.request')
+    def test_get_request_item_by_number_no_results(self, mock_request):
+        """Test Service Request Item retrieval by number with no results."""
+        mock_response = Mock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = {"result": []}
+        mock_request.return_value = mock_response
+
+        with pytest.raises(ResourceNotFoundError, match="not found"):
+            self.client.get_request_item("RITM0001234", "number")
+
+    @patch('requests.Session.request')
+    def test_get_request_item_not_found(self, mock_request):
+        """Test Service Request Item retrieval when item not found."""
+        mock_response = Mock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = {"result": []}
+        mock_request.return_value = mock_response
+
+        with pytest.raises(ResourceNotFoundError, match="not found"):
+            self.client.get_request_item("NONEXISTENT", "number")
+
+    @patch('requests.Session.request')
+    def test_get_request_item_by_number_multiple_results(self, mock_request):
+        """Test Service Request Item retrieval by number with multiple results."""
+        mock_response = Mock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = {
+            "result": [
+                {
+                    "sys_id": "item-sys-id-1",
+                    "number": "RITM0001234",
+                    "short_description": "Test request item 1"
+                },
+                {
+                    "sys_id": "item-sys-id-2",
+                    "number": "RITM0001234",
+                    "short_description": "Test request item 2"
+                }
+            ]
+        }
+        mock_request.return_value = mock_response
+
+        result = self.client.get_request_item("RITM0001234", "number")
+
+        assert len(result) == 2
+        assert result[0]["sys_id"] == "item-sys-id-1"
+        assert result[1]["sys_id"] == "item-sys-id-2"
+
+    @patch('requests.Session.request')
+    def test_get_request_item_invalid_identifier(self, mock_request):
+        """Test Service Request Item retrieval with invalid identifier."""
+        with pytest.raises(ValidationError, match="cannot be empty"):
+            self.client.get_request_item("", "sys_id")
+
+    @patch('requests.Session.request')
+    def test_get_request_items_success(self, mock_request):
+        """Test successful retrieval of multiple Service Request Items."""
+        mock_response = Mock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = {
+            "result": [
+                {
+                    "sys_id": "item-sys-id-1",
+                    "number": "RITM0001234",
+                    "short_description": "Test request item 1"
+                },
+                {
+                    "sys_id": "item-sys-id-2",
+                    "number": "RITM0001235",
+                    "short_description": "Test request item 2"
+                }
+            ]
+        }
+        mock_request.return_value = mock_response
+
+        params = {
+            "sysparm_limit": 1,
+            "sysparm_offset": 0
+            }
+
+        result = self.client.get_request_items(params)
+
+        assert len(result) == 2
+        assert result[0]["sys_id"] == "item-sys-id-1"
+        assert result[1]["number"] == "RITM0001235"
+
+    @patch('requests.Session.request')
+    def test_get_request_items_by_request(self, mock_request):
+        """Test retrieval of Service Request Items by parent request sys_id."""
+        mock_response = Mock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = {
+            "result": [
+                {
+                    "sys_id": "item-sys-id-1",
+                    "number": "RITM0001234",
+                    "short_description": "Test request item 1"
+                }
+            ]
+        }
+        mock_request.return_value = mock_response
+
+        params = {
+            "sysparm_query": "request=parent-request-sys-id"
+            }
+
+        result = self.client.get_request_items(params)
+
+        assert len(result) == 1
+        assert result[0]["sys_id"] == "item-sys-id-1"

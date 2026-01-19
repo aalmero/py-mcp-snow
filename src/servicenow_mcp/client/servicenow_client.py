@@ -998,6 +998,134 @@ class ServiceNowClient:
                 response_data=response_data
         )
 
+    def get_request_item(self, identifier: str, id_type: str = "sys_id") -> Dict[str, Any]:
+        """Retrieve a Service Request Item by sys_id or request item number.
+
+        Args:
+            identifier: sys_id or request item number
+            id_type: "sys_id" or "number"
+
+        Returns:
+            Dict containing Service Request Item data
+
+        Raises:
+            ValidationError: If identifier is invalid
+            ResourceNotFoundError: If request not found
+            ServiceNowAPIError: If retrieval fails
+        """
+        if not identifier:
+            raise ValidationError(
+                f"Service Request Item {id_type} cannot be empty",
+                field_name=id_type,
+                invalid_value=identifier
+            )
+
+        if id_type == "sys_id":
+            endpoint = f"/api/now/table/sc_req_item/{identifier}"
+            response_data = self._make_request("GET", endpoint)
+        elif id_type == "number":
+            endpoint = "/api/now/table/sc_req_item"
+            params = {'sysparm_query': f'number={identifier}'}
+            response_data = self._make_request("GET", endpoint, params=params)
+
+            if 'result' in response_data and response_data['result']:
+                return response_data['result']
+            else:
+                raise ResourceNotFoundError(
+                    f"Service Request Item with number {identifier} not found",
+                    resource_type="sc_req_item",
+                    resource_id=identifier
+                )
+        else:
+            raise ValidationError(
+                f"Invalid id_type: {id_type}. Must be 'sys_id' or 'number'",
+                field_name="id_type",
+                invalid_value=id_type
+            )
+
+        if 'result' in response_data:
+            return response_data['result']
+        else:
+            raise ServiceNowAPIError(
+                "Unexpected response format from ServiceNow",
+                response_data=response_data
+            )
+
+    def get_request_items(self, filters: Dict[str, Any]) -> Dict[str, Any]:
+        """Retrieve request items using the Service Catalog API.
+
+        Args:
+            filters: Query parameters for request items retrieval
+                - request: Service Request sys_id to filter items
+                - status: Service Request state (e.g., "1", "2", "3")
+                - requested_for: User sys_id or username for whom request was made
+                - opened_by: User sys_id or username who opened the request
+
+        Returns:
+            Dict containing request items and metadata
+
+        Raises:
+            ServiceNowAPIError: If retrieval fails
+        """
+        # Validate filters
+        if not isinstance(filters, dict):
+            raise ValidationError(
+                "Filters must be a dictionary",
+                field_name="filters",
+                invalid_value=type(filters).__name__
+            )
+
+        # Build query string from filters using AND logic
+        query_parts = []
+
+        # Request filter
+        if 'request' in filters:
+            request = filters['request']
+            if request is not None and str(request).strip():
+                query_parts.append(f"request={request}")
+
+        # Status filter
+        if 'status' in filters:
+            status = filters['status']
+            if status is not None and str(status).strip():
+                query_parts.append(f"state={status}")
+
+        # Requested for user filter
+        if 'requested_for' in filters:
+            requested_for = filters['requested_for']
+            if requested_for is not None and str(requested_for).strip():
+                query_parts.append(f"requested_for={requested_for}")
+
+        # Opened by user filter
+        if 'opened_by' in filters:
+            opened_by = filters['opened_by']
+            if opened_by is not None and str(opened_by).strip():
+                query_parts.append(f"opened_by={opened_by}")
+
+        # Combine query parts with AND logic (^ in ServiceNow query syntax)
+        query = '^'.join(query_parts) if query_parts else ''
+
+        endpoint = "/api/now/table/sc_req_item"
+
+        # Build query parameters
+        query_params = {}
+
+        if query:
+            query_params['sysparm_query'] = query
+
+        query_params['sysparm_fields'] = 'sys_id,number,request,cat_item,state,short_description,stage'
+
+        logger.info(f"Retrieving request items with params: {query_params}")
+        response_data = self._make_request("GET", endpoint, params=query_params)
+
+        if 'result' in response_data:
+            return response_data['result']
+        else:
+            raise ServiceNowAPIError(
+                "Unexpected response format from ServiceNow",
+                response_data=response_data
+            )
+
     def close(self) -> None:
         """Close the HTTP session."""
         if self.session:
