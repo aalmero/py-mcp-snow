@@ -319,10 +319,15 @@ def order_catalog_item(
         result = servicenow_client.order_catalog_item(catalog_data)
         
         logger.info(f"Catalog item ordered successfully: {sys_id}")
+
+        # return the request items details instead of just the order info
+        request_id = result["request_id"]
+        logger.info(f"Retrieving request item details for request: {request_id}")
+        result_items = servicenow_client.get_request_items(filters={"request": request_id})
         
         return {
             "success": True,
-            "data": result,
+            "data": result_items,
             "message": f"Catalog item {sys_id} ordered successfully"
         }
         
