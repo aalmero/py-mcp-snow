@@ -457,6 +457,63 @@ def get_user(
         }
 
 @mcp.tool
+def get_service_request_items(
+    request: Optional[str] = None,
+    status: Optional[str] = None,
+    requested_for: Optional[str] = None,
+    opened_by: Optional[str] = None,
+) -> Dict[str, Any]:
+    """Retrieve Service Request Items with optional filters.
+
+    Args:
+        request: Filter by parent service request
+        status: Filter by status
+        requested_for: Filter by requested for user
+        opened_by: Filter by opened by user
+
+    Returns:
+        Dictionary containing service request items and metadata
+    """
+    logger = get_logger()
+    logger.info("Retrieving service request items")
+
+    try:
+        if not servicenow_client:
+            raise ServiceNowMCPError("ServiceNow client not initialized")
+
+        # Authenticate if not already done
+        if not servicenow_client.is_authenticated():
+            servicenow_client.authenticate()
+
+        # Build filters dictionary
+        filters = {
+            "request": request,
+            "status": status,
+            "requested_for": requested_for,
+            "opened_by": opened_by
+        }
+
+        result = servicenow_client.get_service_request_items(filters)
+
+        logger.info("Service request items retrieved successfully")
+
+        return {
+            "success": True,
+            "data": result,
+            "message": "Service request items retrieved successfully"
+        }
+
+    except Exception as e:
+        logger.error(f"Failed to retrieve service request items: {e}")
+        if isinstance(e, ServiceNowMCPError):
+            return format_error_response(e)
+        return {
+            "success": False,
+            "error": str(e),
+            "error_code": "GET_SERVICE_REQUEST_ITEMS_ERROR"
+        }
+    
+@mcp.tool
 def get_server_info() -> Dict[str, Any]:
     """Get information about the ServiceNow MCP Server.
     
