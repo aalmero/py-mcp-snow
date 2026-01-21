@@ -4,15 +4,15 @@ import pytest
 from unittest.mock import Mock, patch, MagicMock
 from typing import Iterator, Dict, Any
 
-from src.servicenow_mcp.streaming.http_streaming import (
+from src.streaming.http_streaming import (
     StreamingHTTPHandler, 
     StreamingResponse, 
     StreamingFormat
 )
-from src.servicenow_mcp.streaming.mcp_streaming import StreamingMCPTools
-from src.servicenow_mcp.client.servicenow_client import ServiceNowClient
-from src.servicenow_mcp.config.settings import ServiceNowConfig
-from src.servicenow_mcp.exceptions import ValidationError
+from src.streaming.mcp_streaming import StreamingMCPTools
+from src.client.servicenow_client import ServiceNowClient
+from src.config.settings import ServiceNowConfig
+from src.exceptions import ValidationError
 
 
 @pytest.fixture

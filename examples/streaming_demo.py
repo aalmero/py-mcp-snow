@@ -13,10 +13,10 @@ from typing import Iterator, Dict, Any
 # Add src to path for demo
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
 
-from servicenow_mcp.streaming.http_streaming import StreamingHTTPHandler, StreamingFormat
-from servicenow_mcp.streaming.mcp_streaming import StreamingMCPTools
-from servicenow_mcp.client.servicenow_client import ServiceNowClient
-from servicenow_mcp.config.settings import ServiceNowConfig
+from src.streaming.http_streaming import StreamingHTTPHandler, StreamingFormat
+from src.streaming.mcp_streaming import StreamingMCPTools
+from src.client.servicenow_client import ServiceNowClient
+from src.config.settings import ServiceNowConfig
 
 
 def generate_sample_data(count: int = 1000) -> Iterator[Dict[str, Any]]:

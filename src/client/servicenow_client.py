@@ -5,7 +5,7 @@ from typing import Dict, Any, Optional, List, Iterator, Union
 import requests
 from requests.auth import HTTPBasicAuth
 from requests.adapters import HTTPAdapter
-from servicenow_mcp.utils.logging import get_logger
+from ..utils.logging import get_logger
 from urllib3.util.retry import Retry
 import json
 

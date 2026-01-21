@@ -21,7 +21,7 @@ def setup_logging(config: Optional[ServerConfig] = None) -> logging.Logger:
         config = load_server_config()
     
     # Create logger
-    logger = logging.getLogger("servicenow_mcp")
+    logger = logging.getLogger("src")
     logger.setLevel(getattr(logging, config.log_level))
     
     # Remove existing handlers to avoid duplicates
@@ -46,11 +46,11 @@ def setup_logging(config: Optional[ServerConfig] = None) -> logging.Logger:
     return logger
 
 
-def get_logger(name: str = "servicenow_mcp") -> logging.Logger:
+def get_logger(name: str = "src") -> logging.Logger:
     """Get a logger instance with the specified name.
     
     Args:
-        name: Logger name (defaults to main servicenow_mcp logger)
+        name: Logger name (defaults to main src logger)
         
     Returns:
         logging.Logger: Logger instance

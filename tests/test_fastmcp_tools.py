@@ -3,12 +3,12 @@
 import pytest
 from unittest.mock import patch
 
-from src.servicenow_mcp.tools.fastmcp_tools import (
+from src.tools.fastmcp_tools import (
     mcp,
     initialize_tools
 )
-from src.servicenow_mcp.client.servicenow_client import ServiceNowClient
-from src.servicenow_mcp.config.settings import ServiceNowConfig
+from src.client.servicenow_client import ServiceNowClient
+from src.config.settings import ServiceNowConfig
 
 
 @pytest.fixture
@@ -74,7 +74,7 @@ class TestFastMCPToolsInitialization:
 class TestServiceRequestToolsIntegration:
     """Test Service Request MCP tools integration."""
     
-    @patch('src.servicenow_mcp.tools.fastmcp_tools.servicenow_client')
+    @patch('src.tools.fastmcp_tools.servicenow_client')
     def test_create_service_request_tool_exists(self, mock_client):
         """Test that create_service_request tool is properly registered."""
         # Get the tool from the FastMCP tool manager
@@ -86,7 +86,7 @@ class TestServiceRequestToolsIntegration:
         assert create_tool.description is not None
         assert "Create a new Service Request" in create_tool.description
 
-    @patch('src.servicenow_mcp.tools.fastmcp_tools.servicenow_client')
+    @patch('src.tools.fastmcp_tools.servicenow_client')
     def test_get_service_request_tool_exists(self, mock_client):
         """Test that get_service_request tool is properly registered."""
         tools = mcp._tool_manager._tools
@@ -97,7 +97,7 @@ class TestServiceRequestToolsIntegration:
         assert get_tool.description is not None
         assert "Retrieve a Service Request" in get_tool.description
 
-    @patch('src.servicenow_mcp.tools.fastmcp_tools.servicenow_client')
+    @patch('src.tools.fastmcp_tools.servicenow_client')
     def test_update_service_request_tool_exists(self, mock_client):
         """Test that update_service_request tool is properly registered."""
         tools = mcp._tool_manager._tools
@@ -108,7 +108,7 @@ class TestServiceRequestToolsIntegration:
         assert update_tool.description is not None
         assert "Update an existing Service Request" in update_tool.description
 
-    @patch('src.servicenow_mcp.tools.fastmcp_tools.servicenow_client')
+    @patch('src.tools.fastmcp_tools.servicenow_client')
     def test_order_catalog_item_tool_exists(self, mock_client):
         """Test that order_catalog_item tool is properly registered."""
         tools = mcp._tool_manager._tools
@@ -118,7 +118,7 @@ class TestServiceRequestToolsIntegration:
         assert order_tool.description is not None
         assert "Order a catalog item" in order_tool.description
 
-    @patch('src.servicenow_mcp.tools.fastmcp_tools.servicenow_client')
+    @patch('src.tools.fastmcp_tools.servicenow_client')
     def test_search_service_requests_tool_exists(self, mock_client):
         """Test that search_service_requests tool is properly registered."""
         tools = mcp._tool_manager._tools
@@ -129,7 +129,7 @@ class TestServiceRequestToolsIntegration:
         assert search_tool.description is not None
         assert "Search Service Requests" in search_tool.description
 
-    @patch('src.servicenow_mcp.tools.fastmcp_tools.servicenow_client')
+    @patch('src.tools.fastmcp_tools.servicenow_client')
     def test_get_user_tool_exists(self, mock_client):
         """Test that get_user tool is properly registered."""
         tools = mcp._tool_manager._tools

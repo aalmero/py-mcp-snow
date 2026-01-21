@@ -7,10 +7,10 @@ import os
 # Add src to path for testing
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
 
-from servicenow_mcp import __version__
-from servicenow_mcp.config.settings import ServiceNowConfig, ServerConfig
-from servicenow_mcp.exceptions import ConfigurationError
-from servicenow_mcp.utils.logging import setup_logging
+from src import __version__
+from src.config.settings import ServiceNowConfig, ServerConfig
+from src.exceptions import ConfigurationError
+from src.utils.logging import setup_logging
 
 
 def test_package_version():
@@ -53,5 +53,5 @@ def test_logging_setup():
     """Test logging setup."""
     config = ServerConfig(log_level="INFO")
     logger = setup_logging(config)
-    assert logger.name == "servicenow_mcp"
+    assert logger.name == "src"
     assert logger.level == 20  # INFO level

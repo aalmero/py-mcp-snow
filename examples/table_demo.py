@@ -13,8 +13,8 @@ from pathlib import Path
 src_path = Path(__file__).parent.parent / "src"
 sys.path.insert(0, str(src_path))
 
-from servicenow_mcp.client.servicenow_client import ServiceNowClient
-from servicenow_mcp.config.settings import ServiceNowConfig
+from src.client.servicenow_client import ServiceNowClient
+from src.config.settings import ServiceNowConfig
 
 
 def main():

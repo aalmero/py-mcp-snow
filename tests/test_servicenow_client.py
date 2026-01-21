@@ -4,9 +4,9 @@ import pytest
 from unittest.mock import Mock, patch, MagicMock
 import requests
 
-from src.servicenow_mcp.client.servicenow_client import ServiceNowClient
-from src.servicenow_mcp.config.settings import ServiceNowConfig
-from src.servicenow_mcp.exceptions import (
+from src.client.servicenow_client import ServiceNowClient
+from src.config.settings import ServiceNowConfig
+from src.exceptions import (
     AuthenticationError,
     ServiceNowAPIError,
     ConnectionError,

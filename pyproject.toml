@@ -30,10 +30,10 @@ dependencies = [
 
 
 [project.scripts]
-servicenow-mcp-server = "servicenow_mcp.server:main"
+servicenow-mcp-server = "main:main"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/servicenow_mcp"]
+packages = ["src", "."]
 
 [tool.hatch.build]
 sources = ["src"]

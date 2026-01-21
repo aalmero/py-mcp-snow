@@ -15,10 +15,10 @@ from typing import Dict, Any
 # Add src to path for demo
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
 
-from servicenow_mcp.server import initialize_server
-from servicenow_mcp.streaming.http_streaming import StreamingFormat
-from servicenow_mcp.utils.logging import setup_logging, get_logger
-from servicenow_mcp.config.settings import load_server_config
+from src.server import initialize_server
+from src.streaming.http_streaming import StreamingFormat
+from src.utils.logging import setup_logging, get_logger
+from src.config.settings import load_server_config
 
 
 async def simulate_mcp_tool_call(tool_name: str, parameters: Dict[str, Any]) -> Dict[str, Any]:

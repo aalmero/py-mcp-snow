@@ -14,8 +14,8 @@ from typing import Dict, Any, Iterator
 # Add src to path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
 
-from servicenow_mcp.server import initialize_server
-from servicenow_mcp.streaming.http_streaming import StreamingFormat
+from src.server import initialize_server
+from src.streaming.http_streaming import StreamingFormat
 
 
 def generate_test_data(count: int = 10) -> Iterator[Dict[str, Any]]:
@@ -121,7 +121,7 @@ async def demonstrate_streaming_formats():
     print("\n🎨 Demonstrating Streaming Formats")
     print("=" * 50)
     
-    from servicenow_mcp.streaming.http_streaming import StreamingHTTPHandler
+    from src.streaming.http_streaming import StreamingHTTPHandler
     
     # Create streaming handler
     handler = StreamingHTTPHandler()

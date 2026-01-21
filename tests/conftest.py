@@ -4,7 +4,7 @@ import pytest
 import os
 from unittest.mock import patch
 
-from src.servicenow_mcp.config.settings import ServiceNowConfig, ServerConfig
+from src.config.settings import ServiceNowConfig, ServerConfig
 
 
 @pytest.fixture
