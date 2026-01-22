@@ -30,6 +30,7 @@ middleware = [
     )
 ]
 
+app = mcp.http_app(middleware=middleware)
 
 # Global client instance (will be initialized by server)
 servicenow_client: Optional[ServiceNowClient] = None
