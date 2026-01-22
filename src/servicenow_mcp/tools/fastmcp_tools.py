@@ -7,10 +7,29 @@ from fastmcp import FastMCP
 from ..client.servicenow_client import ServiceNowClient
 from ..exceptions import ServiceNowMCPError, ValidationError, format_error_response
 from ..utils.logging import get_logger
+from starlette.middleware import Middleware
+from starlette.middleware.cors import CORSMiddleware
 
 
 # Global FastMCP instance
 mcp = FastMCP("ServiceNow MCP Server")
+
+# Configure CORS for browser-based clients
+middleware = [
+    Middleware(
+        CORSMiddleware,
+        allow_origins=["*"],  # Allow all origins; use specific origins for security in Production
+        allow_methods=["GET", "POST", "DELETE", "OPTIONS"],
+        allow_headers=[
+            "mcp-protocol-version",
+            "mcp-session-id",
+            "Authorization",
+            "Content-Type",
+        ],
+        expose_headers=["mcp-session-id"],
+    )
+]
+
 
 # Global client instance (will be initialized by server)
 servicenow_client: Optional[ServiceNowClient] = None
