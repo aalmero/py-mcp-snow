@@ -82,6 +82,10 @@ def run_fastmcp_server(transport: str = "stdio", host: str = "127.0.0.1", port: 
         logger.info("   • get_service_request - Retrieve Service Request by ID")
         logger.info("   • update_service_request - Update existing Service Requests")
         logger.info("   • search_service_requests - Search with multiple criteria")
+        logger.info("   • order_catalog_item - Order catalog items")
+        logger.info("   • get_catalog_items - Get available catalog items")
+        logger.info("   • get_user - Get user information")
+        logger.info("   • get_service_request_items - Get items for a Service Request")
         logger.info("   • get_server_info - Server capabilities and status")
         
         logger.info("🎯 ServiceNow MCP Server ready for connections!")
