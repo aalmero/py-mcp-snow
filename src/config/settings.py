@@ -1,7 +1,7 @@
 """Configuration management for ServiceNow MCP Server."""
 
 import os
-from typing import Optional, Literal
+from typing import Optional, Literal, List
 from pydantic import BaseModel, Field, field_validator, model_validator
 from dotenv import load_dotenv
 
@@ -68,6 +68,29 @@ class ServerConfig(BaseModel):
         description="Log message format"
     )
     max_concurrent_requests: int = Field(10, gt=0, description="Maximum concurrent requests")
+    # CORS / middleware configuration (can be set via environment variables)
+    cors_allow_origins: List[str] = Field(
+        ["http://localhost:8000"],
+        description="List of allowed origins for CORS"
+    )
+    cors_allow_methods: List[str] = Field(
+        ["GET", "POST", "DELETE", "OPTIONS"],
+        description="List of allowed HTTP methods for CORS"
+    )
+    cors_allow_headers: List[str] = Field(
+        [
+            "mcp-protocol-version",
+            "mcp-session-id",
+            "Authorization",
+            "Content-Type",
+        ],
+        description="List of allowed headers for CORS"
+    )
+    cors_expose_headers: List[str] = Field(
+        ["mcp-session-id"],
+        description="List of exposed headers for CORS"
+    )
+    cors_allow_credentials: bool = Field(False, description="Allow credentials in CORS")
     
     @field_validator('log_level')
     @classmethod
@@ -158,12 +181,40 @@ def load_server_config() -> ServerConfig:
         max_concurrent_requests = int(os.getenv("MAX_CONCURRENT_REQUESTS", "10"))
     except ValueError as e:
         raise ConfigurationError(f"Invalid MAX_CONCURRENT_REQUESTS value: {e}")
+
+    def _parse_list_env(var_name: str, default: List[str]) -> List[str]:
+        raw = os.getenv(var_name)
+        if not raw:
+            return default
+        # split on commas and strip whitespace
+        return [p.strip() for p in raw.split(',') if p.strip()]
+
+    cors_allow_origins = _parse_list_env("CORS_ALLOW_ORIGINS", ["http://localhost:8000"])
+    cors_allow_methods = _parse_list_env(
+        "CORS_ALLOW_METHODS", ["GET", "POST", "DELETE", "OPTIONS"]
+    )
+    cors_allow_headers = _parse_list_env(
+        "CORS_ALLOW_HEADERS",
+        [
+            "mcp-protocol-version",
+            "mcp-session-id",
+            "Authorization",
+            "Content-Type",
+        ],
+    )
+    cors_expose_headers = _parse_list_env("CORS_EXPOSE_HEADERS", ["mcp-session-id"])
+    cors_allow_credentials = os.getenv("CORS_ALLOW_CREDENTIALS", "false").lower() in ("1", "true", "yes")
     
     try:
         return ServerConfig(
             log_level=log_level,
             log_format=log_format,
-            max_concurrent_requests=max_concurrent_requests
+            max_concurrent_requests=max_concurrent_requests,
+            cors_allow_origins=cors_allow_origins,
+            cors_allow_methods=cors_allow_methods,
+            cors_allow_headers=cors_allow_headers,
+            cors_expose_headers=cors_expose_headers,
+            cors_allow_credentials=cors_allow_credentials,
         )
     except ValueError as e:
         raise ConfigurationError(f"Server configuration validation failed: {e}")

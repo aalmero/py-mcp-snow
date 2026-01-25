@@ -7,30 +7,13 @@ from fastmcp import FastMCP
 from ..client.servicenow_client import ServiceNowClient
 from ..exceptions import ServiceNowMCPError, ValidationError, format_error_response
 from ..utils.logging import get_logger
+from ..config.settings import load_server_config
 from starlette.middleware import Middleware
 from starlette.middleware.cors import CORSMiddleware
 
 
 # Global FastMCP instance
 mcp = FastMCP("ServiceNow MCP Server")
-
-# Configure CORS for browser-based clients
-middleware = [
-    Middleware(
-        CORSMiddleware,
-        allow_origins=["*"],  # Allow all origins; use specific origins for security in Production
-        allow_methods=["GET", "POST", "DELETE", "OPTIONS"],
-        allow_headers=[
-            "mcp-protocol-version",
-            "mcp-session-id",
-            "Authorization",
-            "Content-Type",
-        ],
-        expose_headers=["mcp-session-id"],
-    )
-]
-
-app = mcp.http_app(middleware=middleware)
 
 # Global client instance (will be initialized by server)
 servicenow_client: Optional[ServiceNowClient] = None
@@ -46,6 +29,28 @@ def initialize_tools(client: ServiceNowClient) -> None:
     
     logger = get_logger()
     logger.info("FastMCP tools initialized with ServiceNow client")
+
+    # Configure CORS for browser-based clients
+    server_config = load_server_config()
+    
+    logger.info(f"Configuring CORS with allowed origins: {server_config.model_dump_json}")
+
+    middleware = [
+        Middleware(
+            CORSMiddleware,
+            allow_origins=["*"],  # Allow all origins; use specific origins for security in Production
+            allow_methods=["GET", "POST", "DELETE", "OPTIONS"],
+            allow_headers=[
+                "mcp-protocol-version",
+                "mcp-session-id",
+                "Authorization",
+                "Content-Type",
+            ],
+            expose_headers=["mcp-session-id"],
+        )
+    ]
+
+    app = mcp.http_app(middleware=middleware)
 
 
 @mcp.tool
