@@ -1,6 +1,6 @@
 # ServiceNow MCP Server
 
-A Model Context Protocol (MCP) server that provides AI assistants with standardized tools for managing ServiceNow Service Requests. Built with **FastMCP 2.0** and Python, this server enables natural language interactions with ServiceNow's REST API.
+A Model Context Protocol (MCP) server that provides AI assistants with standardized tools for managing ServiceNow Built with **FastMCP 2.0** and Python, this server enables natural language interactions with ServiceNow's REST API.
 
 ## Features
 
@@ -9,6 +9,7 @@ A Model Context Protocol (MCP) server that provides AI assistants with standardi
 - 🛒 **Service Catalog Integration** - Browse and order catalog items using the Service Catalog API
 - 🔍 **Advanced Search** - Filter requests by status, user, date range, and more
 - ⚡ **FastMCP 2.0** - Simplified MCP server development with decorators
+- 🔐 **AWS Cognito OAuth** - Support for AWS Cognito OAuth? Fast CMP Authentication
 - 🛡️ **Comprehensive Error Handling** - Detailed error messages and retry logic
 - ✅ **Fully Tested** - 52+ unit tests covering all core operations
 - 🔄 **Automatic Retry** - Configurable retry logic for transient failures
@@ -33,7 +34,7 @@ A Model Context Protocol (MCP) server that provides AI assistants with standardi
 1. Clone the repository:
 ```bash
 git clone <repository-url>
-cd servicenow-mcp-server
+cd py-mcp-snow
 ```
 
 2. Configure environment variables:
@@ -128,6 +129,24 @@ SERVICENOW_RETRY_COUNT=3
 # Server Configuration
 LOG_LEVEL=INFO
 MAX_CONCURRENT_REQUESTS=10
+
+# Use the AWS Cognito provider
+FASTMCP_SERVER_AUTH=fastmcp.server.auth.providers.aws.AWSCognitoProvider
+
+# AWS Cognito credentials
+FASTMCP_SERVER_AUTH_AWS_COGNITO_USER_POOL_ID=eu-central-1_XXXXXXXXX
+FASTMCP_SERVER_AUTH_AWS_COGNITO_AWS_REGION=eu-central-1
+FASTMCP_SERVER_AUTH_AWS_COGNITO_CLIENT_ID=your-app-client-id
+FASTMCP_SERVER_AUTH_AWS_COGNITO_CLIENT_SECRET=your-app-client-secret
+FASTMCP_SERVER_AUTH_AWS_COGNITO_BASE_URL=https://your-server.com
+FASTMCP_SERVER_AUTH_AWS_COGNITO_REQUIRED_SCOPES=openid,email,profile
+
+# CORS Configuration 
+CORS_ALLOW_ORIGINS="http://localhost:8000"
+CORS_ALLOW_METHODS="GET,POST,DELETE,OPTIONS"
+CORS_ALLOW_HEADERS="Authorization,Content-Type"
+CORS_EXPOSE_HEADERS="mcp-session-id"
+CORS_ALLOW_CREDENTIALS=false
 ```
 
 ### Authentication Methods
@@ -266,7 +285,7 @@ uv run pytest tests/test_servicenow_client.py -v
 
 Run with coverage:
 ```bash
-uv run pytest tests/ --cov=src/servicenow_mcp --cov-report=html
+uv run pytest tests/ --cov=src --cov-report=html
 ```
 
 ### Code Quality
@@ -308,17 +327,16 @@ uv sync --upgrade
 ```
 servicenow-mcp-server/
 ├── src/
-│   └── servicenow_mcp/
-│       ├── client/           # ServiceNow HTTP client
-│       │   └── servicenow_client.py
-│       ├── config/           # Configuration management
-│       │   └── settings.py
-│       ├── tools/            # FastMCP tool definitions
-│       │   └── fastmcp_tools.py
-│       ├── utils/            # Utilities (logging, etc.)
-│       │   └── logging.py
-│       ├── exceptions.py     # Custom exceptions
-│       └── server.py         # Main server entry point
+│   ├── client/           # ServiceNow HTTP client
+│   │   └── servicenow_client.py
+│   ├── config/           # Configuration management
+│   │   └── settings.py
+│   ├── tools/            # FastMCP tool definitions
+│   │   └── fastmcp_tools.py
+│   ├── utils/            # Utilities (logging, etc.)
+│   │   └── logging.py
+│   ├── exceptions.py     # Custom exceptions
+│   └── server.py         # Main server entry point
 ├── tests/                    # Test suite
 │   ├── conftest.py          # Pytest fixtures
 │   ├── test_setup.py        # Setup tests
@@ -391,12 +409,12 @@ The project includes comprehensive test coverage:
 - [x] MCP protocol integration
 - [x] Multiple transport support (stdio, streamable HTTP)
 - [x] Docker deployment
+- [x] OAuth 2.0 authentication
 
 ### In Progress 🚧
 - [ ] Property-based testing
 
 ### Planned 📋
-- [ ] OAuth 2.0 authentication
 - [ ] Additional ServiceNow table support
 - [ ] Webhook support
 - [ ] Performance optimizations
