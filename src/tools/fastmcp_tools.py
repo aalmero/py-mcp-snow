@@ -10,6 +10,7 @@ from ..utils.logging import get_logger
 from ..config.settings import load_server_config
 from starlette.middleware import Middleware
 from starlette.middleware.cors import CORSMiddleware
+from starlette.responses import JSONResponse
 
 
 # Global FastMCP instance
@@ -32,26 +33,26 @@ def initialize_tools(client: ServiceNowClient) -> None:
 
     # Configure CORS for browser-based clients
     server_config = load_server_config()
-    
+
     logger.info(f"Configuring CORS with allowed origins: {server_config.model_dump_json}")
 
     middleware = [
         Middleware(
             CORSMiddleware,
-            allow_origins=["*"],  # Allow all origins; use specific origins for security in Production
-            allow_methods=["GET", "POST", "DELETE", "OPTIONS"],
-            allow_headers=[
-                "mcp-protocol-version",
-                "mcp-session-id",
-                "Authorization",
-                "Content-Type",
-            ],
-            expose_headers=["mcp-session-id"],
+            allow_origins=server_config.cors_allow_origins,
+            allow_methods=server_config.cors_allow_methods,
+            allow_headers=server_config.cors_allow_headers,
+            expose_headers=server_config.cors_expose_headers,
+            allow_credentials=server_config.cors_allow_credentials
         )
     ]
 
     app = mcp.http_app(middleware=middleware)
 
+@mcp.custom_route("/health", methods=["GET"])
+async def health_check(request):
+    """Health check endpoint for the MCP server."""
+    return JSONResponse({"status": "healthy", "service": "ServiceNow MCP Server"})
 
 @mcp.tool
 def create_service_request(
@@ -552,7 +553,7 @@ def get_server_info() -> Dict[str, Any]:
         server_info = {
             "name": "ServiceNow MCP Server",
             "version": "0.1.0",
-            "description": "MCP server for ServiceNow Service Request management",
+            "description": "MCP server for ServiceNow",
             "capabilities": {
                 "service_requests": {
                     "create": True,
